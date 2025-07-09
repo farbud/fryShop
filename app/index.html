@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>منِ قوی</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#28a745" />
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f2f2f2;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 20px;
+            background: #28a745;
+            width: 0%;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            font-size: 12px;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group label {
+            display: block;
+            margin: 5px 0;
+        }
+
+        .feeling {
+            margin-top: 10px;
+        }
+
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border: none;
+            background: #28a745;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>اپ منِ قوی 💪</h1>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+    <div id="tracker"></div>
+
+    <script>
+        const days = ["شنبه", "یک‌شنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
+
+        function saveData(day, data) {
+            localStorage.setItem(`tracker-${day}`, JSON.stringify(data));
+            updateProgress();
+        }
+
+        function loadData(day) {
+            const data = localStorage.getItem(`tracker-${day}`);
+            return data ? JSON.parse(data) : {};
+        }
+
+        function createCard(day) {
+            const saved = loadData(day);
+
+            const card = document.createElement("div");
+            card.className = "day-card";
+
+            card.innerHTML = `
+        <h3>${day}</h3>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="smokeYes"> کشیدم 🚬</label>
+          <label><input type="checkbox" name="smokeNo"> نکشیدم 🚫</label>
+          <label><input type="checkbox" name="workout"> ورزش 💪</label>
+          <label><input type="checkbox" name="code"> تمرین کد 💻</label>
+        </div>
+        <div class="feeling">
+          <label>حال کلیت:
+            <select name="feeling">
+              <option value="">-- انتخاب --</option>
+              <option value="😊">😊 خوب</option>
+              <option value="😐">😐 معمولی</option>
+              <option value="😞">😞 بد</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>یه جمله از خودت:
+            <textarea rows="2" name="note" placeholder="مثلاً: امروز ترک کردم، حس خوبی دارم!"></textarea>
+          </label>
+        </div>
+        <button>ذخیره</button>
+      `;
+
+            const checkboxSmokeYes = card.querySelector("[name='smokeYes']");
+            const checkboxSmokeNo = card.querySelector("[name='smokeNo']");
+            const checkboxWorkout = card.querySelector("[name='workout']");
+            const checkboxCode = card.querySelector("[name='code']");
+            const selectFeeling = card.querySelector("[name='feeling']");
+            const textareaNote = card.querySelector("[name='note']");
+
+            checkboxSmokeYes.checked = saved.smokeYes || false;
+            checkboxSmokeNo.checked = saved.smokeNo || false;
+            checkboxWorkout.checked = saved.workout || false;
+            checkboxCode.checked = saved.code || false;
+            selectFeeling.value = saved.feeling || "";
+            textareaNote.value = saved.note || "";
+
+            card.querySelector("button").addEventListener("click", () => {
+                const data = {
+                    smokeYes: checkboxSmokeYes.checked,
+                    smokeNo: checkboxSmokeNo.checked,
+                    workout: checkboxWorkout.checked,
+                    code: checkboxCode.checked,
+                    feeling: selectFeeling.value,
+                    note: textareaNote.value
+                };
+                saveData(day, data);
+                alert("ذخیره شد! ✅");
+            });
+
+            return card;
+        }
+
+        function updateProgress() {
+            let total = 0;
+            let completed = 0;
+
+            days.forEach(day => {
+                const data = loadData(day);
+                if ("smokeNo" in data) total++, data.smokeNo && completed++;
+                if ("workout" in data) total++, data.workout && completed++;
+                if ("code" in data) total++, data.code && completed++;
+            });
+
+            const percent = total ? Math.round((completed / total) * 100) : 0;
+            const fill = document.getElementById("progressFill");
+            fill.style.width = percent + "%";
+            fill.textContent = percent + "%";
+        }
+
+        const trackerDiv = document.getElementById("tracker");
+        days.forEach(day => {
+            trackerDiv.appendChild(createCard(day));
+        });
+
+        updateProgress();
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log('Service Worker Registered');
+            });
+        }
+    </script>
+</body>
+
+</html>
